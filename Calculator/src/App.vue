@@ -3,7 +3,7 @@
     <div class="calculator">
       <div class="display-container">
         <!-- بخش لیست تاریخچه -->
-        <div class="history-list" v-if="history.length > 0">
+        <div class="history-list" ref="historyContainer" v-if="history.length > 0">
           <div v-for="(item, index) in history" :key="index" class="history-item">
             {{ item }}
           </div>
@@ -58,7 +58,7 @@
   </div>
 </template>
 <script setup>
-import { ref } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 
 const display = ref('0')
 const num1 = ref('')
@@ -67,6 +67,35 @@ const num2 = ref('')
 const isEvaluated = ref(false) // مشخص می‌کند آیا مساوی زده شده یا نه
 const isDark = ref(false)
 const history = ref([])
+
+const historyContainer = ref(null)
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (historyContainer.value) {
+      historyContainer.value.scrollTop = historyContainer.value.scrollHeight
+    }
+  })
+}
+
+// بارگذاری تاریخچه از حافظه محلی هنگام بالا آمدن برنامه
+onMounted(async () => {
+  const saved = localStorage.getItem('calc_history')
+  if (saved) {
+    history.value = JSON.parse(saved)
+    await nextTick() // صبر می‌کنه تا لیست تاریخچه اول کامل توی صفحه رسم بشه
+    scrollToBottom()
+  }
+})
+
+// هر بار تاریخچه تغییر کرد، خودکار در حافظه ذخیره شود
+watch(
+  history,
+  (newVal) => {
+    localStorage.setItem('calc_history', JSON.stringify(newVal))
+  },
+  { deep: true },
+)
 
 // تبدیل کاراکتر کد به کاراکتر نمایشی
 const getOpSymbol = (operator) => {
@@ -177,6 +206,7 @@ const calculate = () => {
   }
 
   isEvaluated.value = true
+  scrollToBottom()
 }
 const clearHistory = () => {
   history.value = []
@@ -237,6 +267,13 @@ const toggleTheme = () => {
 }
 </script>
 <style scoped>
+/* شبکه دکمه‌ها به صورت گرید منظم */
+.buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+}
 .app-container {
   width: 100vw;
   min-height: 100vh;
@@ -279,29 +316,44 @@ const toggleTheme = () => {
   gap: 10px;
 }
 
+/* ردیف دکمه‌ها */
 .btn-row {
   display: flex;
-  gap: 10px;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+/* تنظیم کل صفحه ماشین حساب برای موبایل */
+.calculator-app {
+  width: 100%;
+  max-width: 420px;
+  min-height: 100vh;
+  min-height: 100dvh; /* پشتیبانی دقیق از ارتفاع داینامیک موبایل */
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: env(safe-area-inset-top, 20px) 16px env(safe-area-inset-bottom, 20px) 16px;
+  box-sizing: border-box;
 }
 
 .btn {
   flex: 1;
-  height: 56px;
+  aspect-ratio: 1;
+  border-radius: 50%;
   border: none;
-  border-radius: 14px;
-  background-color: #f1f5f9;
-  font-size: 20px;
+  font-size: 1.55rem;
   font-weight: 600;
-  color: #1e293b;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.1s;
+  background-color: #f3f4f6; /* رنگ پس‌زمینه ملایم برای کلیدهای عدد */
+  color: #1f2937;
+  transition: transform 0.1s ease, background-color 0.2s ease;
 }
 
 .btn:active {
-  transform: scale(0.95);
+  transform: scale(0.92);
 }
 
 .btn img {
@@ -366,45 +418,51 @@ const toggleTheme = () => {
   background-color: #16a34a;
   color: #fff;
 }
+/* محفظه نمایشگر و تاریخچه */
 .display-container {
-  min-height: 140px; /* افزایش ارتفاع برای بزرگتر شدن */
-  max-height: 220px;
+  flex: 1; /* فضای خالی بالا را هوشمند پر می‌کند */
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   padding: 16px;
-  border-radius: 18px;
-  background: var(--display-bg, rgba(0, 0, 0, 0.04));
-  margin-bottom: 20px;
-  word-break: break-all;
+  border-radius: 20px;
+  margin-bottom: 16px;
+  background: var(--display-bg, rgba(0, 0, 0, 0.03));
   overflow: hidden;
 }
 
 .history-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   overflow-y: auto;
-  margin-bottom: 12px;
-  max-height: 100px;
-  scrollbar-width: thin;
+  max-height: 110px;
+  margin-bottom: 8px;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* مخفی‌سازی در فایرفاکس */
+  -ms-overflow-style: none; /* اینترنت اکسپلورر و اج */
+}
+
+/* مخفی‌سازی در کروم و سافاری */
+.history-list::-webkit-scrollbar {
+  display: none;
 }
 
 .history-item {
-  font-size: 0.95rem;
-  opacity: 0.55;
+  font-size: 1rem;
+  opacity: 0.6;
   text-align: right;
-  transition: opacity 0.2s;
 }
 
 .history-item:hover {
   opacity: 0.9;
 }
-
+/* عدد جاری اصلی */
 .current-display {
-  font-size: 2.2rem;
-  font-weight: 600;
+  font-size: clamp(2rem, 5vw, 0.5rem); /* تنظیم خودکار سایز فونت برای موبایل */
+  font-weight: 700;
   text-align: right;
+  word-break: break-all;
   line-height: 1.2;
 }
 </style>
