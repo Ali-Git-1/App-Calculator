@@ -415,7 +415,7 @@ body,
 }
 
 .app-container.dark-theme .calculator {
-  background-color: #1e293b;
+  background-color: #1a2234;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
@@ -426,7 +426,7 @@ body,
 }
 
 .app-container.dark-theme .btn {
-  background-color: #334155;
+  background-color: #273549;
   color: #f8fafc;
 }
 
@@ -445,6 +445,20 @@ body,
 .app-container.dark-theme .btn-equal {
   background-color: #16a34a;
   color: #fff;
+}
+
+/* --- افزودن رنگ متن واضح برای نمایشگر و تاریخچه در تم دارک --- */
+.app-container.dark-theme .display-container {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.app-container.dark-theme .history-item {
+  color: #94a3b8; /* خاکستری روشن و شفاف برای سابقه */
+  opacity: 0.85;
+}
+
+.app-container.dark-theme .current-display {
+  color: #ffffff; /* سفید کاملاً درخشان برای عدد و فرمول اصلی */
 }
 /* محفظه نمایشگر و تاریخچه */
 .display-container {
@@ -487,7 +501,7 @@ body,
 }
 /* عدد جاری اصلی */
 .current-display {
-  font-size: clamp(2rem, 5vw, 0.5rem); /* تنظیم خودکار سایز فونت برای موبایل */
+  font-size: clamp(1.5rem, 5vw, 0.5rem); /* تنظیم خودکار سایز فونت برای موبایل */
   font-weight: 700;
   text-align: right;
   word-break: break-all;
