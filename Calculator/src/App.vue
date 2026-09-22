@@ -266,7 +266,22 @@ const toggleTheme = () => {
   isDark.value = !isDark.value
 }
 </script>
-<style scoped>
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* جلوگیری کامل از هرگونه اسکرول افقی/عمودی کل صفحه */
+  touch-action: none; /* جلوگیری از رفتارهای ناخواسته اسکرول در وب‌ویوی موبایل */
+}
+
 /* شبکه دکمه‌ها به صورت گرید منظم */
 .buttons-grid {
   display: grid;
@@ -275,25 +290,36 @@ const toggleTheme = () => {
   width: 100%;
 }
 .app-container {
-  width: 100vw;
-  min-height: 100vh;
+  width: 100%;
+  height: 100%;
+  height: 100dvh; /* هماهنگ با نوار استاتوس‌بار و ناوبری اندروید */
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: #f3f4f6;
-  transition: background-color 0.3s ease;
+  overflow: hidden;
 }
 
 .calculator {
-  width: 320px;
-  background-color: #ffffff;
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  height: 100%; /* در موبایل کل صفحه رو پر می‌کنه */
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  transition: background-color 0.3s ease;
+  justify-content: space-between;
+  padding: 16px;
+  background-color: #ffffff;
+}
+
+/* برای کامپیوتر یا تبلت: حالت کارت با ابعاد فیکس به خودش بگیره */
+@media (min-width: 480px) {
+  .calculator {
+    width: 360px;
+    height: auto;
+    max-height: 90vh;
+    border-radius: 28px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.1);
+    padding: 24px 20px;
+  }
 }
 
 .screen {
@@ -349,7 +375,9 @@ const toggleTheme = () => {
   cursor: pointer;
   background-color: #f3f4f6; /* رنگ پس‌زمینه ملایم برای کلیدهای عدد */
   color: #1f2937;
-  transition: transform 0.1s ease, background-color 0.2s ease;
+  transition:
+    transform 0.1s ease,
+    background-color 0.2s ease;
 }
 
 .btn:active {
@@ -436,7 +464,7 @@ const toggleTheme = () => {
   flex-direction: column;
   gap: 8px;
   overflow-y: auto;
-  max-height: 110px;
+  max-height: 900px;
   margin-bottom: 8px;
   scroll-behavior: smooth;
   scrollbar-width: none; /* مخفی‌سازی در فایرفاکس */
