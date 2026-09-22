@@ -187,20 +187,29 @@ const handlePercent = () => {
 }
 
 const handleBackspace = () => {
+  // اگر محاسبه تمام شده باشد، به کاربر اجازه بده آخرین رقم نتیجه را پاک کند
   if (isEvaluated.value) {
-    clearAll()
+    isEvaluated.value = false
+    // num1 هم‌اکنون حاصل قبلی را دارد
+    num1.value = num1.value.slice(0, -1)
+    display.value = num1.value || '0'
     return
   }
 
-  if (num2.value) {
+  // اگر در حال نوشتن عدد دوم هستیم
+  if (num2.value !== '') {
     num2.value = num2.value.slice(0, -1)
     display.value = num2.value
       ? `${num1.value} ${getOpSymbol(op.value)} ${num2.value}`
       : `${num1.value} ${getOpSymbol(op.value)}`
-  } else if (op.value) {
+  }
+  // اگر عدد دوم خالی است و عملگر وجود دارد
+  else if (op.value !== '') {
     op.value = ''
-    display.value = num1.value
-  } else if (num1.value) {
+    display.value = num1.value || '0'
+  }
+  // اگر فقط در حال نوشتن عدد اول هستیم
+  else if (num1.value !== '') {
     num1.value = num1.value.slice(0, -1)
     display.value = num1.value || '0'
   }
