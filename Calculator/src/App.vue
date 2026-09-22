@@ -52,84 +52,157 @@
 import { ref } from 'vue'
 
 const display = ref('0')
-const num1 = ref(null)
-const op = ref(null)
+const num1 = ref('')
+const op = ref('')
+const num2 = ref('')
+const isEvaluated = ref(false) // مشخص می‌کند آیا مساوی زده شده یا نه
 const isDark = ref(false)
-const shouldReset = ref(false)
+
+// تبدیل کاراکتر کد به کاراکتر نمایشی
+const getOpSymbol = (operator) => {
+  if (operator === '/') return '÷'
+  if (operator === '*') return '×'
+  return operator
+}
 
 const appendNumber = (n) => {
-  if (display.value === '0' || shouldReset.value) {
-    display.value = n.toString()
-    shouldReset.value = false
+  // اگر محاسبه تمام شده بود و عدد جدید زده شد، از اول شروع کن
+  if (isEvaluated.value) {
+    clearAll()
+  }
+
+  const str = n.toString()
+
+  if (!op.value) {
+    // در حال تایپ عدد اول
+    num1.value = num1.value === '0' || !num1.value ? str : num1.value + str
+    display.value = num1.value
   } else {
-    display.value += n.toString()
+    // در حال تایپ عدد دوم
+    num2.value = num2.value === '0' || !num2.value ? str : num2.value + str
+    display.value = `${num1.value} ${getOpSymbol(op.value)} ${num2.value}`
   }
 }
 
 const appendDot = () => {
-  if (shouldReset.value) {
-    display.value = '0.'
-    shouldReset.value = false
-    return
+  if (isEvaluated.value) {
+    clearAll()
   }
-  if (!display.value.includes('.')) {
-    display.value += '.'
+
+  if (!op.value) {
+    if (!num1.value) num1.value = '0.'
+    else if (!num1.value.includes('.')) num1.value += '.'
+    display.value = num1.value
+  } else {
+    if (!num2.value) num2.value = '0.'
+    else if (!num2.value.includes('.')) num2.value += '.'
+    display.value = `${num1.value} ${getOpSymbol(op.value)} ${num2.value}`
   }
 }
 
 const setOperation = (operator) => {
-  if (num1.value !== null && op.value && !shouldReset.value) {
-    calculate()
+  if (display.value === 'Error') return
+
+  // اگر نتیجه قبلی وجود دارد، روی همان نتیجه عملیات جدید انجام بده
+  if (isEvaluated.value) {
+    isEvaluated.value = false
+    num2.value = ''
   }
-  num1.value = parseFloat(display.value)
+
+  // اگر عدد اول هنوز خالی بود
+  if (!num1.value) {
+    num1.value = '0'
+  }
+
+  // اگر کاربر عدد دوم را هم زده بود و دوباره عملگر زد، اول قبلی را حساب کن
+  if (num2.value) {
+    calculate()
+    isEvaluated.value = false
+  }
+
   op.value = operator
-  shouldReset.value = true
+  display.value = `${num1.value} ${getOpSymbol(operator)}`
 }
 
 const calculate = () => {
-  if (op.value === null || num1.value === null) return
+  // بدون داشتن عملگر و عدد دوم، محاسبه انجام نمی‌شود
+  if (!op.value || !num2.value || isEvaluated.value) return
 
-  const num2 = parseFloat(display.value)
+  const n1 = parseFloat(num1.value)
+  const n2 = parseFloat(num2.value)
   let result = 0
 
   switch (op.value) {
     case '+':
-      result = num1.value + num2
+      result = n1 + n2
       break
     case '-':
-      result = num1.value - num2
+      result = n1 - n2
       break
     case '*':
-      result = num1.value * num2
+      result = n1 * n2
       break
     case '/':
-      result = num2 !== 0 ? num1.value / num2 : 'Error'
+      result = n2 !== 0 ? n1 / n2 : 'Error'
       break
   }
 
-  display.value = result.toString()
-  num1.value = typeof result === 'number' ? result : null
-  op.value = null
-  shouldReset.value = true
+  // نمایش فرمت کامل: 82 + 10 = 92
+  display.value = `${num1.value} ${getOpSymbol(op.value)} ${num2.value} = ${result}`
+
+  if (result === 'Error') {
+    num1.value = ''
+    op.value = ''
+    num2.value = ''
+  } else {
+    // نتیجه، عدد اول مرحله بعدی می‌شود
+    num1.value = result.toString()
+    op.value = ''
+    num2.value = ''
+  }
+
+  isEvaluated.value = true
 }
 
 const clearAll = () => {
   display.value = '0'
-  num1.value = null
-  op.value = null
-  shouldReset.value = false
+  num1.value = ''
+  op.value = ''
+  num2.value = ''
+  isEvaluated.value = false
 }
 
 const handlePercent = () => {
-  const current = parseFloat(display.value)
-  if (!isNaN(current)) display.value = (current / 100).toString()
+  if (isEvaluated.value) {
+    isEvaluated.value = false
+  }
+
+  if (num2.value) {
+    num2.value = (parseFloat(num2.value) / 100).toString()
+    display.value = `${num1.value} ${getOpSymbol(op.value)} ${num2.value}`
+  } else if (num1.value) {
+    num1.value = (parseFloat(num1.value) / 100).toString()
+    display.value = num1.value
+  }
 }
 
 const handleBackspace = () => {
-  if (display.value.length > 1 && display.value !== 'Error') {
-    display.value = display.value.slice(0, -1)
-  } else {
-    display.value = '0'
+  if (isEvaluated.value) {
+    clearAll()
+    return
+  }
+
+  if (num2.value) {
+    num2.value = num2.value.slice(0, -1)
+    display.value = num2.value
+      ? `${num1.value} ${getOpSymbol(op.value)} ${num2.value}`
+      : `${num1.value} ${getOpSymbol(op.value)}`
+  } else if (op.value) {
+    op.value = ''
+    display.value = num1.value
+  } else if (num1.value) {
+    num1.value = num1.value.slice(0, -1)
+    display.value = num1.value || '0'
   }
 }
 
@@ -211,11 +284,25 @@ const toggleTheme = () => {
   object-fit: contain;
 }
 
-.btn-clear { background-color: #fecaca; color: #991b1b; }
-.btn-action { background-color: #e2e8f0; color: #334155; }
-.btn-op { background-color: #fed7aa; color: #9a3412; }
-.btn-equal { background-color: #bbf7d0; color: #166534; }
-.btn-theme { background-color: #e2e8f0; }
+.btn-clear {
+  background-color: #fecaca;
+  color: #991b1b;
+}
+.btn-action {
+  background-color: #e2e8f0;
+  color: #334155;
+}
+.btn-op {
+  background-color: #fed7aa;
+  color: #9a3412;
+}
+.btn-equal {
+  background-color: #bbf7d0;
+  color: #166534;
+}
+.btn-theme {
+  background-color: #e2e8f0;
+}
 
 .app-container.dark-theme {
   background-color: #0b0f19;
@@ -241,7 +328,16 @@ const toggleTheme = () => {
   filter: invert(1);
 }
 
-.app-container.dark-theme .btn-clear { background-color: #dc2626; color: #fff; }
-.app-container.dark-theme .btn-op { background-color: #ea580c; color: #fff; }
-.app-container.dark-theme .btn-equal { background-color: #16a34a; color: #fff; }
+.app-container.dark-theme .btn-clear {
+  background-color: #dc2626;
+  color: #fff;
+}
+.app-container.dark-theme .btn-op {
+  background-color: #ea580c;
+  color: #fff;
+}
+.app-container.dark-theme .btn-equal {
+  background-color: #16a34a;
+  color: #fff;
+}
 </style>
