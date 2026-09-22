@@ -1,9 +1,18 @@
 <template>
   <div class="app-container" :class="{ 'dark-theme': isDark }">
     <div class="calculator">
-      <!-- نمایشگر -->
-      <div class="screen-container">
-        <input type="text" class="screen" :value="display" readonly />
+      <div class="display-container">
+        <!-- بخش لیست تاریخچه -->
+        <div class="history-list" v-if="history.length > 0">
+          <div v-for="(item, index) in history" :key="index" class="history-item">
+            {{ item }}
+          </div>
+        </div>
+
+        <!-- نمایشگر اصلی فعلی -->
+        <div class="current-display">
+          {{ display }}
+        </div>
       </div>
 
       <!-- دکمه‌ها -->
@@ -57,6 +66,7 @@ const op = ref('')
 const num2 = ref('')
 const isEvaluated = ref(false) // مشخص می‌کند آیا مساوی زده شده یا نه
 const isDark = ref(false)
+const history = ref([])
 
 // تبدیل کاراکتر کد به کاراکتر نمایشی
 const getOpSymbol = (operator) => {
@@ -125,7 +135,6 @@ const setOperation = (operator) => {
 }
 
 const calculate = () => {
-  // بدون داشتن عملگر و عدد دوم، محاسبه انجام نمی‌شود
   if (!op.value || !num2.value || isEvaluated.value) return
 
   const n1 = parseFloat(num1.value)
@@ -147,15 +156,21 @@ const calculate = () => {
       break
   }
 
-  // نمایش فرمت کامل: 82 + 10 = 92
-  display.value = `${num1.value} ${getOpSymbol(op.value)} ${num2.value} = ${result}`
+  const expression = `${num1.value} ${getOpSymbol(op.value)} ${num2.value} = ${result}`
+  display.value = expression
 
   if (result === 'Error') {
     num1.value = ''
     op.value = ''
     num2.value = ''
   } else {
-    // نتیجه، عدد اول مرحله بعدی می‌شود
+    // افزودن محاسبه به تاریخچه (جدیدترین محاسبات در بالا یا پایین)
+    history.value.push(expression)
+    // اگر محاسبات زیاد شد، مثلا فقط ۱۰ تای آخر رو نگه دار
+    if (history.value.length > 15) {
+      history.value.shift()
+    }
+
     num1.value = result.toString()
     op.value = ''
     num2.value = ''
@@ -163,7 +178,9 @@ const calculate = () => {
 
   isEvaluated.value = true
 }
-
+const clearHistory = () => {
+  history.value = []
+}
 const clearAll = () => {
   display.value = '0'
   num1.value = ''
@@ -348,5 +365,46 @@ const toggleTheme = () => {
 .app-container.dark-theme .btn-equal {
   background-color: #16a34a;
   color: #fff;
+}
+.display-container {
+  min-height: 140px; /* افزایش ارتفاع برای بزرگتر شدن */
+  max-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--display-bg, rgba(0, 0, 0, 0.04));
+  margin-bottom: 20px;
+  word-break: break-all;
+  overflow: hidden;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  max-height: 100px;
+  scrollbar-width: thin;
+}
+
+.history-item {
+  font-size: 0.95rem;
+  opacity: 0.55;
+  text-align: right;
+  transition: opacity 0.2s;
+}
+
+.history-item:hover {
+  opacity: 0.9;
+}
+
+.current-display {
+  font-size: 2.2rem;
+  font-weight: 600;
+  text-align: right;
+  line-height: 1.2;
 }
 </style>
